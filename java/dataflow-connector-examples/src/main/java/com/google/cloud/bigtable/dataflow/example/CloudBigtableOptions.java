@@ -19,4 +19,15 @@ public interface CloudBigtableOptions extends DataflowPipelineOptions {
 
   void setBigtableTableId(String bigtableTableId);
 
+  @Description("Provide the Start timestamp." )
+  String getStartTimestamp();
+
+
+  void setStartTimestamp(String startTimestamp);
+
+  @Description("Provide the End timestamp." )
+  String getEndTimestamp();
+
+  void setEndTimestamp(String endTimestamp);
+
 }

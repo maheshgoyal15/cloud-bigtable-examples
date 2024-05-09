@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.dataflow.example;
 
+import java.io.IOException;
+
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.TextIO;
@@ -61,6 +63,8 @@ public class SourceRowCount {
   /**
    * Options needed for running the pipelne. It needs a
    */
+  public static long startTime;
+  public static long endTime;
   public static interface CountOptions extends CloudBigtableOptions {
 
     void setResultLocation(String resultLocation);
@@ -78,16 +82,44 @@ public class SourceRowCount {
     }
   };
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     CountOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(CountOptions.class);
     String PROJECT_ID = options.getBigtableProjectId();
     String INSTANCE_ID = options.getBigtableInstanceId();
     String TABLE_ID = options.getBigtableTableId();
+      // String START_TIME = options.getStartTimestamp();
+      // String END_TIME = options.getEndTimestamp();
+      // long startTime = Long.parseLong(options.getStartTimestamp());
+      // long endTime = Long.parseLong(END_TIME);
+      String START_TIME = options.getStartTimestamp();
+      String END_TIME = options.getEndTimestamp();
+      
 
+      try {
+        startTime = Long.parseLong(START_TIME);
+         endTime = Long.parseLong(END_TIME);
+        
+        // Use startTime and endTime here
+        } catch (NumberFormatException e) {
+            // Handle the case where the string cannot be parsed as a long
+            System.err.println("Invalid timestamp format: " + e.getMessage());
+            // Additional error handling as needed
+        }
+
+    
     // [START bigtable_dataflow_connector_scan_config]
     Scan scan = new Scan();
     scan.setCacheBlocks(false);
+    
+    if (START_TIME !=null && END_TIME!=null) 
+    {
+
+      scan.setTimeRange(startTime,endTime);
+    }
+    
+    
+    //scan.setTimeRange(timestamp1, timestamp2);
     scan.setFilter(new FirstKeyOnlyFilter());
 
     // CloudBigtableTableConfiguration contains the project, zone, cluster and table to connect to.
@@ -100,6 +132,7 @@ public class SourceRowCount {
             .withScan(scan)
             .build();
 
+    
     Pipeline p = Pipeline.create(options);
 
     p.apply(Read.from(CloudBigtableIO.read(config)))
